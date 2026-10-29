@@ -2,6 +2,8 @@
 
 A dragon-themed password generator that runs entirely in your browser. Every password is made with `crypto.getRandomValues`, and nothing is sent anywhere.
 
+**Try it: https://felix-two-tone.github.io/DragonPass/**
+
 ## Features
 
 - **Random:** length 4–256 and 14 character sets, including accented letters, Greek and runes. You can exclude look-alike or ambiguous characters, set minimum counts, and require that no characters repeat, no runs like `abc` appear, the password starts with a letter, and more.
