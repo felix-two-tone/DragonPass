@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <radialGradient id="dpBg" cx="50%" cy="42%" r="62%">
+      <stop offset="0" stop-color="#5c0f15"/>
+      <stop offset="1" stop-color="#180406"/>
+    </radialGradient>
+    <linearGradient id="dpGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbe7b0"/>
+      <stop offset=".5" stop-color="#e2a83f"/>
+      <stop offset="1" stop-color="#8f4f16"/>
+    </linearGradient>
+    <linearGradient id="dpScale" x1="0" y1="0" x2=".4" y2="1">
+      <stop offset="0" stop-color="#ff5340"/>
+      <stop offset="1" stop-color="#9c0c16"/>
+    </linearGradient>
+    <linearGradient id="dpFire" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset=".6" stop-color="#ff7a2a"/>
+      <stop offset="1" stop-color="#ff3d1f" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="dpClip"><circle cx="60" cy="60" r="54"/></clipPath>
+  </defs>
+  <circle cx="60" cy="60" r="55" fill="url(#dpBg)"/>
+  <g clip-path="url(#dpClip)">
+    <path d="M92 64 Q102 56 108 60 Q101 62 112 67 Q101 68 107 75 Q97 70 90 67 Z" fill="url(#dpFire)"/>
+    <g transform="translate(4 6)">
+      <path d="M50 33 Q40 22 24 20 Q36 27 44 38 Z" fill="#7d0a12"/>
+      <path d="M88 52 L72 45 Q63 42 57 35 L54 31 Q36 15 8 10 Q30 22 42 34 Q32 36 26 42 L33 45 Q27 51 25 58 L16 60 L24 65 Q22 72 23 79 L14 82 L24 86 Q24 96 28 106 L50 106 Q43 90 48 77 Q54 66 66 64 L80 62 L73 58 L90 57 Z" fill="url(#dpScale)" stroke="#2a0306" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M57 35 L54 31 Q36 15 8 10 Q30 22 42 34" fill="none" stroke="url(#dpGold)" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M48 77 Q54 66 66 64 L80 62" fill="none" stroke="#ffb07a" stroke-opacity=".55" stroke-width="1.2"/>
+      <path d="M36 66 Q41 70 40 78 M33 82 Q38 86 37 94" fill="none" stroke="#5e050c" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M74 58 L76 61.5 L78 58 Z M80 57.2 L82 60.5 L84 57 Z" fill="#fff3dc"/>
+      <ellipse cx="62" cy="43.5" rx="3.6" ry="2" transform="rotate(28 62 43.5)" fill="#ffd25e"/>
+      <ellipse cx="62.4" cy="43.6" rx=".8" ry="1.6" transform="rotate(28 62 43.6)" fill="#2a0306"/>
+      <circle cx="84" cy="50" r="1" fill="#2a0306"/>
+    </g>
+  </g>
+  <circle cx="60" cy="60" r="55" fill="none" stroke="url(#dpGold)" stroke-width="4"/>
+  <circle cx="60" cy="60" r="49.5" fill="none" stroke="#e2a83f" stroke-opacity=".35" stroke-width="1" stroke-dasharray="1.5 3.5"/>
+</svg>

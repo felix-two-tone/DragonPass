@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DragonPass — Password Forge</title>
+  <meta name="description" content="DragonPass forges strong, random passwords, passphrases, PINs and keys entirely in your browser.">
+  <meta name="theme-color" content="#0d0406">
+  <link rel="icon" href="assets/dragon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <canvas id="embers" aria-hidden="true"></canvas>
+
+  <header class="site-header">
+    <img class="logo" src="assets/dragon.svg" alt="" width="104" height="104">
+    <div>
+      <h1>DragonPass</h1>
+      <p class="tagline">Passwords forged in dragonfire</p>
+    </div>
+  </header>
+
+  <form id="options" class="container" autocomplete="off">
+
+    <!-- ===== The Forge: output ===== -->
+    <section class="card forge" aria-labelledby="forge-title">
+      <h2 id="forge-title" class="visually-hidden">Generated password</h2>
+
+      <div class="output-wrap">
+        <output id="output" class="output" aria-live="polite"></output>
+        <div class="output-actions">
+          <button type="button" class="icon-btn" id="btn-mask" title="Show / hide (H)" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5C6.5 5 2.7 9.4 1.5 12c1.2 2.6 5 7 10.5 7s9.3-4.4 10.5-7C21.3 9.4 17.5 5 12 5zm0 11.5A4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 0 1 0 9zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
+            <span class="visually-hidden">Show or hide</span>
+          </button>
+          <button type="button" class="icon-btn" id="btn-copy" title="Copy (C)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>
+            <span class="visually-hidden">Copy</span>
+          </button>
+        </div>
+      </div>
+
+      <p id="error" class="error" role="alert" hidden></p>
+
+      <div class="strength">
+        <div class="meter" id="meter" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="strength-text">
+          <strong id="tier-name">—</strong>
+          <span id="tier-desc" class="muted"></span>
+        </div>
+      </div>
+
+      <dl class="stats">
+        <div><dt>Entropy</dt><dd id="stat-bits">—</dd></div>
+        <div><dt>Length</dt><dd id="stat-length">—</dd></div>
+        <div>
+          <dt>
+            <label for="rate">Time to crack</label>
+          </dt>
+          <dd id="stat-crack">—</dd>
+        </div>
+      </dl>
+
+      <div class="forge-controls">
+        <button type="button" class="btn-primary" id="btn-generate">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5.7s.7 2.6.7 4.7c0 2-1.3 3.7-3.4 3.7S7.3 7.4 7.3 5.4l.03-.36C5.3 7.5 4 10.6 4 14a8 8 0 0 0 16 0c0-5.4-2.6-10.2-6.5-13.3zM11.7 20c-1.8 0-3.2-1.4-3.2-3.1 0-1.6 1-2.8 2.8-3.1 1.8-.4 3.6-1.2 4.6-2.6.4 1.3.6 2.6.6 4 0 2.6-2.1 4.8-4.8 4.8z"/></svg>
+          Forge anew
+        </button>
+        <label class="inline-field">
+          <span>Forge</span>
+          <input type="number" name="qty" min="1" max="500" value="1" class="num">
+          <span>at once</span>
+        </label>
+        <label class="inline-field">
+          <span>Attacker</span>
+          <select name="rate" id="rate">
+            <option value="0.02778">Throttled online — 100 / hour</option>
+            <option value="10">Unthrottled online — 10 / sec</option>
+            <option value="1e4">Offline, slow hash — 10k / sec</option>
+            <option value="1e10" selected>Offline, fast hash — 10B / sec</option>
+            <option value="1e14">Dragon's hoard of GPUs — 100T / sec</option>
+          </select>
+        </label>
+        <label class="toggle compact">
+          <input type="checkbox" name="autoCopy">
+          <span class="switch"></span><span>Auto-copy</span>
+        </label>
+      </div>
+
+      <div id="bulk" class="bulk" hidden>
+        <div class="bulk-head">
+          <h3>The hoard <span id="bulk-count" class="muted"></span></h3>
+          <div class="bulk-actions">
+            <button type="button" class="btn-ghost" id="btn-copy-all">Copy all</button>
+            <button type="button" class="btn-ghost" id="btn-download">Download .txt</button>
+          </div>
+        </div>
+        <ol id="bulk-list" class="bulk-list"></ol>
+      </div>
+    </section>
+
+    <!-- ===== Mode tabs ===== -->
+    <nav class="tabs" role="tablist" aria-label="Generator type">
+      <button type="button" role="tab" data-mode="random" aria-selected="true">Random</button>
+      <button type="button" role="tab" data-mode="passphrase" aria-selected="false">Passphrase</button>
+      <button type="button" role="tab" data-mode="pronounce" aria-selected="false">Pronounceable</button>
+      <button type="button" role="tab" data-mode="pattern" aria-selected="false">Pattern</button>
+      <button type="button" role="tab" data-mode="pin" aria-selected="false">PIN</button>
+      <button type="button" role="tab" data-mode="keys" aria-selected="false">Keys &amp; Tokens</button>
+    </nav>
+
+    <!-- ===== Random ===== -->
+    <section class="panel" data-panel="random" role="tabpanel">
+      <div class="presets">
+        <span class="muted">Presets</span>
+        <button type="button" class="chip" data-preset="balanced">Balanced</button>
+        <button type="button" class="chip" data-preset="fortress">Fortress</button>
+        <button type="button" class="chip" data-preset="readable">Easy to read</button>
+        <button type="button" class="chip" data-preset="legacy">Legacy site</button>
+        <button type="button" class="chip" data-preset="wifi">Wi-Fi key</button>
+        <button type="button" class="chip" data-preset="arcane">Arcane runes</button>
+      </div>
+
+      <div class="grid">
+        <fieldset class="card">
+          <legend>Length</legend>
+          <div class="range-pair">
+            <input type="range" name="r_length" min="4" max="256" value="20" aria-label="Password length">
+            <input type="number" min="4" max="256" value="20" class="num" aria-label="Password length">
+          </div>
+          <p class="info" data-info="random"></p>
+        </fieldset>
+
+        <fieldset class="card span-2">
+          <legend>Character sets</legend>
+          <div class="toggle-grid">
+            <label class="toggle"><input type="checkbox" name="r_upper" checked><span class="switch"></span><span>Uppercase <code>A–Z</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_lower" checked><span class="switch"></span><span>Lowercase <code>a–z</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_digits" checked><span class="switch"></span><span>Digits <code>0–9</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_symbols" checked><span class="switch"></span><span>Symbols</span>
+              <input type="text" name="r_symbolChars" value="!@#$%^&amp;*" class="mini" aria-label="Symbol characters" spellcheck="false"></label>
+            <label class="toggle"><input type="checkbox" name="r_punct"><span class="switch"></span><span>Punctuation <code>. , : ; ?</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_brackets"><span class="switch"></span><span>Brackets <code>( ) [ ] { } &lt; &gt;</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_math"><span class="switch"></span><span>Math <code>+ - = ~</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_quotes"><span class="switch"></span><span>Quotes <code>' " `</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_slashes"><span class="switch"></span><span>Slashes <code>\ / | _</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_space"><span class="switch"></span><span>Space <code>␣</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_latin"><span class="switch"></span><span>Accented <code>à é ñ ß</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_greek"><span class="switch"></span><span>Greek <code>α β Ω</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_runes"><span class="switch"></span><span>Runes <code>ᚠ ᚱ ᛟ</code></span></label>
+            <label class="toggle"><input type="checkbox" name="r_useCustom"><span class="switch"></span><span>Custom</span>
+              <input type="text" name="r_customChars" value="" placeholder="your chars" class="mini" aria-label="Custom characters" spellcheck="false"></label>
+          </div>
+          <p class="hint">Accented, Greek and rune characters add strength, but many sites reject non-ASCII passwords.</p>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Exclusions</legend>
+          <label class="toggle"><input type="checkbox" name="r_noSimilar"><span class="switch"></span><span>No look-alikes <code>i l 1 L o 0 O I |</code></span></label>
+          <label class="toggle"><input type="checkbox" name="r_noAmbiguous"><span class="switch"></span><span>No ambiguous symbols <code>{ } [ ] ( ) / \ ' " ` ~ , ; : . &lt; &gt;</code></span></label>
+          <label class="field">
+            <span>Never use these characters</span>
+            <input type="text" name="r_exclude" value="" placeholder="e.g. $%&amp;" spellcheck="false">
+          </label>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Rules</legend>
+          <label class="toggle"><input type="checkbox" name="r_requireEach" checked><span class="switch"></span><span>At least one from every set</span></label>
+          <label class="toggle"><input type="checkbox" name="r_noDup"><span class="switch"></span><span>Never repeat a character</span></label>
+          <label class="toggle"><input type="checkbox" name="r_noConsec"><span class="switch"></span><span>No identical neighbours <code>aa 11</code></span></label>
+          <label class="toggle"><input type="checkbox" name="r_noSeq"><span class="switch"></span><span>No runs <code>abc 321</code></span></label>
+          <label class="toggle"><input type="checkbox" name="r_startLetter"><span class="switch"></span><span>Begin with a letter</span></label>
+          <label class="toggle"><input type="checkbox" name="r_noEdgeSpecial"><span class="switch"></span><span>No symbol at start or end</span></label>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Minimum counts</legend>
+          <div class="mins">
+            <label class="field"><span>Uppercase</span><input type="number" name="r_minUpper" min="0" max="64" value="0" class="num"></label>
+            <label class="field"><span>Lowercase</span><input type="number" name="r_minLower" min="0" max="64" value="0" class="num"></label>
+            <label class="field"><span>Digits</span><input type="number" name="r_minDigits" min="0" max="64" value="0" class="num"></label>
+            <label class="field"><span>Symbols &amp; other</span><input type="number" name="r_minSpecial" min="0" max="64" value="0" class="num"></label>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <!-- ===== Passphrase ===== -->
+    <section class="panel" data-panel="passphrase" role="tabpanel" hidden>
+      <div class="grid">
+        <fieldset class="card">
+          <legend>Words</legend>
+          <div class="range-pair">
+            <input type="range" name="p_words" min="2" max="20" value="5" aria-label="Number of words">
+            <input type="number" min="2" max="20" value="5" class="num" aria-label="Number of words">
+          </div>
+          <label class="field">
+            <span>Word list</span>
+            <select name="p_list">
+              <option value="both" selected>Common + fantasy</option>
+              <option value="common">Common words</option>
+              <option value="fantasy">Fantasy lore</option>
+            </select>
+          </label>
+          <div class="two">
+            <label class="field"><span>Min word length</span><input type="number" name="p_minLen" min="3" max="14" value="3" class="num"></label>
+            <label class="field"><span>Max word length</span><input type="number" name="p_maxLen" min="3" max="14" value="10" class="num"></label>
+          </div>
+          <label class="toggle"><input type="checkbox" name="p_unique" checked><span class="switch"></span><span>No repeated words</span></label>
+          <p class="info" data-info="passphrase"></p>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Style</legend>
+          <label class="field">
+            <span>Separator</span>
+            <select name="p_sep">
+              <option value="-" selected>Hyphen  word-word</option>
+              <option value=" ">Space  word word</option>
+              <option value=".">Period  word.word</option>
+              <option value="_">Underscore  word_word</option>
+              <option value=",">Comma  word,word</option>
+              <option value="">None  wordword</option>
+              <option value="@digit">Random digit  word7word</option>
+              <option value="@symbol">Random symbol  word#word</option>
+              <option value="@mixed">Random digit or symbol</option>
+              <option value="@custom">Custom…</option>
+            </select>
+          </label>
+          <label class="field" data-show-when="p_sep=@custom">
+            <span>Custom separator</span>
+            <input type="text" name="p_sepCustom" value="~" spellcheck="false">
+          </label>
+          <label class="field">
+            <span>Capitalisation</span>
+            <select name="p_case">
+              <option value="lower">lowercase</option>
+              <option value="title" selected>Title Case</option>
+              <option value="upper">UPPERCASE</option>
+              <option value="camel">camelCase</option>
+              <option value="alternate">alternating lower / UPPER</option>
+              <option value="randomWord">Random per word</option>
+              <option value="randomLetter">rAnDoM LeTtErS</option>
+            </select>
+          </label>
+          <label class="toggle"><input type="checkbox" name="p_leet"><span class="switch"></span><span>Leetspeak <code>e→3 a→4 o→0</code></span></label>
+          <p class="hint">Leetspeak is predictable — attackers try it — so it adds no counted strength.</p>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Numbers &amp; symbols</legend>
+          <label class="field">
+            <span>Add digits</span>
+            <select name="p_number">
+              <option value="none">None</option>
+              <option value="end" selected>After the last word</option>
+              <option value="start">Before the first word</option>
+              <option value="random">After a random word</option>
+              <option value="each">After every word</option>
+            </select>
+          </label>
+          <label class="field"><span>Digits each time</span><input type="number" name="p_digits" min="1" max="8" value="2" class="num"></label>
+          <label class="field">
+            <span>Add a symbol</span>
+            <select name="p_symbol">
+              <option value="none">None</option>
+              <option value="end" selected>At the end</option>
+              <option value="start">At the start</option>
+              <option value="both">Both ends</option>
+            </select>
+          </label>
+          <label class="field"><span>Symbol pool</span><input type="text" name="p_symbolChars" value="!@#$%&amp;*?" spellcheck="false"></label>
+        </fieldset>
+      </div>
+    </section>
+
+    <!-- ===== Pronounceable ===== -->
+    <section class="panel" data-panel="pronounce" role="tabpanel" hidden>
+      <div class="grid">
+        <fieldset class="card">
+          <legend>Letters</legend>
+          <div class="range-pair">
+            <input type="range" name="g_length" min="6" max="64" value="14" aria-label="Number of letters">
+            <input type="number" min="6" max="64" value="14" class="num" aria-label="Number of letters">
+          </div>
+          <label class="field">
+            <span>Capitalisation</span>
+            <select name="g_case">
+              <option value="lower">lowercase</option>
+              <option value="first" selected>First letter</option>
+              <option value="syllable">Each syllable</option>
+              <option value="random">rAnDoM letters</option>
+            </select>
+          </label>
+          <p class="info" data-info="pronounce"></p>
+          <p class="hint">Built from syllables like <code>drak</code>, <code>thor</code>, <code>vae</code> — easier to say aloud and type from memory.</p>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Extras</legend>
+          <div class="two">
+            <label class="field"><span>Digits</span><input type="number" name="g_digits" min="0" max="8" value="2" class="num"></label>
+            <label class="field"><span>Symbols</span><input type="number" name="g_symbols" min="0" max="6" value="1" class="num"></label>
+          </div>
+          <label class="field"><span>Symbol pool</span><input type="text" name="g_symbolChars" value="!@#$%&amp;*?" spellcheck="false"></label>
+          <label class="field">
+            <span>Place extras</span>
+            <select name="g_place">
+              <option value="end" selected>At the end</option>
+              <option value="start">At the start</option>
+              <option value="random">Scattered randomly</option>
+            </select>
+          </label>
+        </fieldset>
+      </div>
+    </section>
+
+    <!-- ===== Pattern ===== -->
+    <section class="panel" data-panel="pattern" role="tabpanel" hidden>
+      <div class="grid">
+        <fieldset class="card span-2">
+          <legend>Pattern</legend>
+          <label class="field">
+            <span>Template</span>
+            <input type="text" name="t_pattern" value="Cvccvc-d{4}-Cvccvc" class="mono" spellcheck="false">
+          </label>
+          <div class="presets">
+            <span class="muted">Try</span>
+            <button type="button" class="chip" data-pattern="Cvccvc-d{4}-Cvccvc">Syllables</button>
+            <button type="button" class="chip" data-pattern="W-W-W-d{2}s">Words</button>
+            <button type="button" class="chip" data-pattern="U{5}-U{5}-U{5}-U{5}-U{5}">Product key</button>
+            <button type="button" class="chip" data-pattern="A{4}-A{4}-A{4}-A{4}">Grouped</button>
+            <button type="button" class="chip" data-pattern="h{8}-h{4}-h{4}-h{4}-h{12}">GUID shape</button>
+            <button type="button" class="chip" data-pattern="Ww[!?]d{3}">Short &amp; sweet</button>
+          </div>
+          <p class="info" data-info="pattern"></p>
+        </fieldset>
+
+        <fieldset class="card span-2">
+          <legend>Pattern runes</legend>
+          <div class="legend-grid">
+            <div><code>L</code> uppercase letter</div>
+            <div><code>l</code> lowercase letter</div>
+            <div><code>a</code> any letter</div>
+            <div><code>A</code> letter or digit</div>
+            <div><code>U</code> uppercase or digit</div>
+            <div><code>C</code> / <code>c</code> consonant</div>
+            <div><code>V</code> / <code>v</code> vowel</div>
+            <div><code>d</code> digit</div>
+            <div><code>h</code> / <code>H</code> hex digit</div>
+            <div><code>s</code> symbol</div>
+            <div><code>*</code> any printable ASCII</div>
+            <div><code>w</code> / <code>W</code> word / Word</div>
+            <div><code>[xyz]</code> one of x, y, z</div>
+            <div><code>{n}</code> repeat previous n times</div>
+            <div><code>\x</code> literal x</div>
+            <div>anything else is literal</div>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <!-- ===== PIN ===== -->
+    <section class="panel" data-panel="pin" role="tabpanel" hidden>
+      <div class="grid">
+        <fieldset class="card">
+          <legend>Digits</legend>
+          <div class="range-pair">
+            <input type="range" name="n_length" min="4" max="32" value="6" aria-label="PIN length">
+            <input type="number" min="4" max="32" value="6" class="num" aria-label="PIN length">
+          </div>
+          <p class="info" data-info="pin"></p>
+        </fieldset>
+        <fieldset class="card">
+          <legend>Rules</legend>
+          <label class="toggle"><input type="checkbox" name="n_noCommon" checked><span class="switch"></span><span>Avoid common PINs &amp; years</span></label>
+          <label class="toggle"><input type="checkbox" name="n_noRepeat" checked><span class="switch"></span><span>No identical neighbours <code>11</code></span></label>
+          <label class="toggle"><input type="checkbox" name="n_noSeq" checked><span class="switch"></span><span>No runs <code>123 987</code></span></label>
+          <label class="toggle"><input type="checkbox" name="n_unique"><span class="switch"></span><span>Every digit different</span></label>
+        </fieldset>
+      </div>
+    </section>
+
+    <!-- ===== Keys & tokens ===== -->
+    <section class="panel" data-panel="keys" role="tabpanel" hidden>
+      <div class="grid">
+        <fieldset class="card">
+          <legend>Format</legend>
+          <label class="field">
+            <span>Encoding</span>
+            <select name="k_format">
+              <option value="hex" selected>Hex (lowercase)</option>
+              <option value="HEX">Hex (UPPERCASE)</option>
+              <option value="base64">Base64</option>
+              <option value="base64url">Base64 URL-safe</option>
+              <option value="base32">Base32 (RFC 4648)</option>
+              <option value="base58">Base58 (no 0 O I l)</option>
+              <option value="uuid">UUID v4</option>
+            </select>
+          </label>
+          <label class="toggle"><input type="checkbox" name="k_pad"><span class="switch"></span><span>Include <code>=</code> padding</span></label>
+          <p class="info" data-info="keys"></p>
+        </fieldset>
+        <fieldset class="card">
+          <legend>Random bytes</legend>
+          <div class="range-pair">
+            <input type="range" name="k_bytes" min="4" max="128" value="32" aria-label="Number of random bytes">
+            <input type="number" min="4" max="128" value="32" class="num" aria-label="Number of random bytes">
+          </div>
+          <p class="hint">16 bytes = 128 bits, 32 bytes = 256 bits. Ignored for UUIDs.</p>
+        </fieldset>
+        <fieldset class="card">
+          <legend>Grouping</legend>
+          <label class="field">
+            <span>Split every</span>
+            <select name="k_group">
+              <option value="0" selected>Don't split</option>
+              <option value="4">4 characters</option>
+              <option value="5">5 characters</option>
+              <option value="6">6 characters</option>
+              <option value="8">8 characters</option>
+            </select>
+          </label>
+          <label class="field"><span>With</span><input type="text" name="k_sep" value="-" maxlength="3" spellcheck="false"></label>
+        </fieldset>
+      </div>
+    </section>
+
+    <!-- ===== History & tester ===== -->
+    <div class="lower">
+      <section class="card" aria-labelledby="history-title">
+        <div class="section-head">
+          <h2 id="history-title">Recent forgings</h2>
+          <button type="button" class="btn-ghost" id="btn-clear-history">Clear</button>
+        </div>
+        <div class="row-toggles">
+          <label class="toggle compact"><input type="checkbox" name="keepHistory" checked><span class="switch"></span><span>Remember this session</span></label>
+          <label class="toggle compact"><input type="checkbox" name="blurHistory" checked><span class="switch"></span><span>Blur until hovered</span></label>
+        </div>
+        <ol id="history" class="history"></ol>
+        <p class="hint">History lives only in this tab's memory and vanishes when you close it.</p>
+      </section>
+
+      <section class="card" aria-labelledby="tester-title">
+        <div class="section-head">
+          <h2 id="tester-title">Test a password</h2>
+        </div>
+        <div class="tester-input">
+          <input type="password" id="tester" placeholder="Type or paste a password…" spellcheck="false" autocomplete="off" aria-label="Password to test">
+          <button type="button" class="icon-btn" id="btn-tester-mask" title="Show / hide" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5C6.5 5 2.7 9.4 1.5 12c1.2 2.6 5 7 10.5 7s9.3-4.4 10.5-7C21.3 9.4 17.5 5 12 5zm0 11.5A4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 0 1 0 9zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
+            <span class="visually-hidden">Show or hide</span>
+          </button>
+        </div>
+        <div class="meter small" id="tester-meter" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div id="tester-result" class="tester-result muted">Nothing is sent anywhere — the check runs in your browser.</div>
+      </section>
+    </div>
+  </form>
+
+  <footer class="site-footer container">
+    <p>Every password is forged locally with <code>crypto.getRandomValues</code>. Nothing leaves your browser.</p>
+    <p class="muted">Shortcuts: <kbd>G</kbd> forge · <kbd>C</kbd> copy · <kbd>H</kbd> show / hide</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/wordlists.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
